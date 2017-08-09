@@ -1,0 +1,57 @@
+Name: Arpit Jasapara, UID: 504742401
+
+A. Higher Numbers 
+|---------------| 40(%rsp)
+	...
+|---------------| 32(%rsp)
+	z
+|---------------| 24(%rsp)
+	&z
+|---------------| 16(%rsp)
+	y
+|---------------| 8(%rsp)
+	x
+|---------------|
+Lower Numbers
+
+B.	The value is 64(%rsp) which we assume to be the address 
+of strA s.
+
+C. It uses the stack position of the struct elements to directly 
+access them. For example, "movq 24(%rsp), %rdx" moves &z into rdx.
+
+D. It first accesses the elements of strA, and stores them in local 
+registers. It then overwrites the positions of the strA elements with 
+the strB elements. It then returns the address of strB (which used to 
+be the address of strA).
+
+E. Higher Numbers 
+|---------------| 88(%rsp)
+	r.q = z
+|---------------| 80(%rsp)
+	r.u[1] = x
+|---------------| 72(%rsp)
+	r.u[0] = y
+|---------------| 64(%rsp)	
+	
+|---------------| 56(%rsp)
+
+|---------------| 48(%rsp)
+
+|---------------| 40(%rsp)
+
+|---------------| 32(%rsp)
+	z
+|---------------| 24(%rsp)
+	&z
+|---------------| 16(%rsp)
+	y
+|---------------| 8(%rsp)
+	x
+|---------------|
+Lower Numbers
+						
+F. Structs are passed as function arguments by pushing their elements onto 
+the stack, and passing their addresses into the function. They are returned 
+as function results by changing the elements in the stack, given by the 
+struct address that was passed in.
