@@ -1,0 +1,30 @@
+Name: Arpit Jasapara, UID: 504742401
+
+A. (float) x == (float) dx
+Always true. 
+Rounding would occur on both sides on occasion, but since the rounding 
+would occur in the same way, this expression will always be equal.
+
+B. dx - dy == (double) (x-y)
+Not always true, assuming -fwrapv
+If x-y causes overflow (x is Tmin, y is 1), without -fwrapv, the 
+answer would be undefined. With this flag however, we can see that 
+x-y would become Tmax, a positive value, whereas dx-dy would stay 
+as a negative value.
+
+C. (dx + dy) + dz == dx + (dy + dz)
+Always true.
+Since the range of an int is only from -2^31 to 2^31-1, adding 3 of these 
+values would not force a double to round its lowest bits. Thus, it would 
+maintain the mathematically correct answer, and this expression will 
+always be true by the associative property.
+
+D. (dx * dy) * dz == dx * (dy * dz)
+Not always true.
+If dx = Tmax, dy = Tmax - 1, and dz = Tmax - 2, then this expression 
+will fail due to rounding errors.
+
+E. dx / dx == dz / dz 
+Not always true.
+If dx is 0, then the expression evaluates to NaN. NaN != NaN so 
+this expression would not be true.
