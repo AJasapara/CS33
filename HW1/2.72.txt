@@ -1,0 +1,3 @@
+a) Since size_t is an unsigned int, any arithmetic using this and other ints will be done with the unsigned versions. Unsigned arithmetic is always positive. Since the unsigned version of maxbytes is used along with this size_t, the resulting number will always be positive.
+
+b) if (maxbytes >= sizeof(val)) 

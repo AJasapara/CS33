@@ -1,0 +1,20 @@
+a) The expression will NOT always yield 1.
+There is a special case where x = tMin (there is a 1 in the left-most bit) and y = 0. The left hand side would evaluate to 1. Since -x = ~x + 1, -x results in tMin again, and -y results in 0. tMin is < 0, so the right hand side evaluates to 0. Since 1 does not equal 0, the entire expression evaluates to 0.
+
+b) The expression will always yield 1.
+Since shifting is distributive, the left hand side equals 16x + 16y + y - x, which equals the right hand side.
+
+c) The expression will always yield 1.
+Since ~x = -x-1, substituting this equation in yield -x-y, which equals the right hand side.
+
+d) The expression will always yield 1.
+Since the cast results in both sides performing unsigned arithmetic and the negative sign on the right can be distributed, they are identical equations.
+
+e) The expression will always yield 1.
+Shifting to the right removes the 2 least significant bits, and then shifting to the left replaces these 2 bits with 0s. Thus, at max, the left hand side would be equal to x, otherwise it would always be less.
+
+f) The expression will always yield 1.
+For nonnegative values, the two operations will be identical since the statement after the + will always be 0. For negative values, the right shift for the unsigned data would add an extra 0 at the front, but since the statement after the + will always evaluate to tMin (there is a 1 in the left-most bit), adding these two together will make it equal bit-wise to the negative integer on the left.
+
+g) The expression will always yield 1.
+The modulus operator simply sets all bits greater than or equal to 128 to 0. Similarly, the &127 sets all the bits greater than or equal to 128 to 0, while saving the bits that are less than 128 in their respective positions.
