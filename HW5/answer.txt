@@ -1,0 +1,16 @@
+Name: Arpit Jasapara, UID: 504742401
+
+12.18:
+A. H2, L2, U2, H1, L1, S2, U1, S1, T1, T2
+Unsafe because the L1 puts it into the Unsafe region since S2 has not been called yet. 
+
+B. H2, H1, L1, U1, S1, L2, T1, U2, S2, T2
+Safe because this trajectory does not pass through the Unsafe region.
+
+C. H1, L1, H2, L2, U2, S2, U1, S1, T1, T2
+Unsafe because this trajectory passes through the Unsafe region when L2 is called before U1 and S1 are. 
+
+12.24:
+The functions are implicitly reentrant. They are not explicitly reentrant because pointers may be passed in. However, they are thread-safe.
+The caller must not pass in any pointers to shared data to be considered implicitly reentrant. Since the functions in the book are called with pointers to nonshared data, 
+the functions in the RIO I/O package are implicitly reentrant.
