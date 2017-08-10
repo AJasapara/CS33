@@ -1,0 +1,153 @@
+Name: Arpit Jasapara, UID: 504742401
+
+
+Gather instruction traces
+
+1. gdb ~eggert/bin64/bin/emacs-25.2
+This command executes the Emacs program we are investigating 
+with GDB.
+
+2. (gdb) set disassemble-next-line on
+This command turns on the disassembly output for each line so 
+we can trace what is going on at the machine level for each 
+instruction.
+
+3. (gdb) break Ftimes
+This command sets a breakpoint at Ftimes, the function we 
+are interested in.
+
+4. (gdb) r -Q -batch -eval '(print (* 1250284240 -1844255039))'
+This command runs the eval command as specified in the spec 
+until it hits the breakpoint.
+
+5. (gdb) info registers
+This command gives information on the values that the registers 
+currently contain. It is very useful for the fourth column of 
+the trace file.
+
+6. (gdb) si
+This command steps one instruction at a time, displaying the 
+respective assembly code, which is useful for the first 3 columns 
+of the trace file.
+
+I repeated the 5th and 6th commands over and over again until 
+I hit the the end of the function. Thus, I was able to obtain all 
+the data that I needed for the trace file.
+
+
+Examine integer overflow handling
+
+7. emacs test.c
+I copied and pasted the function into this file so I can compile 
+it using gcc.
+
+8. gcc -c -O2 test.c
+objdump -d test.o
+gcc -c -O2 -fwrapv test.c
+objdump -d test.o
+gcc -c -O2 -fsanitize=undefined test.c
+objdump -d test.o
+
+I ran each of the commands and their respective objdumps to see 
+the assembly of each code. I copied and pasted the assembly code 
+into testovf.txt, analyzing the differences. I focused on how 
+each case handles overflow, since that seems to be the most 
+noticeable difference between the 3. The first one has undefined 
+behavior, the next one uses Two's Complement Wraparound, and the 
+last one reports overflow and other undefined behavior.
+
+
+A few more questions
+
+9. To answer the first question, I looked at all the instructions 
+where overflow or mathematical error may occur. The only places where 
+calculations occur are with the 2 imul instructions and the lea 
+instruction. Both imuls stay within the bounds of the integer, but the lea 
+is where the overflow occurs because the value in rbp is multiplied by 4.
+
+10. To answer this question, I opened the Emacs source code in:
+~eggert/src/emacs-25.2/src/
+where I discovered that all 64-bits of the integer are not used to 
+express the number. The first 2 bits are used as a tag to indicate to 
+Lisp that this otherwise arbitrary variable is a 64-bit integer. Thus, 
+I realized the max range for this number is from -(2**61) to (2**61-1).
+-(2**61) corresponds to most-negative-fixnum.
+
+11. To answer this question, I converted most-positive-fixnum (2**61-1), 
+into hexadecimal and multiplied the number by 4. I then truncated it to 
+the least significant 62 bits, which turned out to be a bunch of zeroes, 
+with a 1 at the end. Thus, the output is just 1.
+
+12. To answer this question, I used my knowledge about -fwrapv and what 
+it does to realize that Two's Complement wrap-around should not create 
+serious issues. It may lead to mathematical inaccuracies in the case of 
+overflow, but undefined behavior will not occur.
+
+13. For this problem, I ran a number of commands:
+First, I ran 
+gdb ~eggert/bin64/bin/emacs-25.2
+to pull up the emacs in gdb.
+
+Then I ran
+(gdb) r -Q -batch -eval '(print (format-time-string "%Y-%m-%d %H:%M:%S %Z" nil (concat (make-string 1000 ?X) "0")))'
+to obtain:
+
+Starting program: /usr/local/cs/bin/emacs -Q -batch -eval '(print (format-time-string "%Y-%m-%d %H:%M:%S %Z" nil (concat (make-string 1000 ?X) "0")))'
+[Thread debugging using libthread_db enabled]
+Using host libthread_db library "/lib64/libthread_db.so.1".
+[New Thread 0x7fffe3174700 (LWP 22836)]
+
+Program received signal SIGSEGV, Segmentation fault.
+0x00007ffff173949b in __strcpy_sse2_unaligned () from /lib64/libc.so.6
+
+To investigate further I backtraced:
+(gdb) bt
+#0  0x00007ffff173949b in __strcpy_sse2_unaligned () from /lib64/libc.so.6
+#1  0x0000000000555b62 in emacs_setenv_TZ (tzstring=0x14813a9 'X' <repeats 135 times>, "T", 'X' <repeats 64 times>...) at editfns.c:2428
+#2  0x00000000005d8468 in change_env (tz=0x14813a0) at time_rz.c:223
+#3  revert_tz (tz=tz@entry=0x14813a0) at time_rz.c:268
+#4  0x00000000005d87fc in localtime_rz (tz=0x1480fa0, t=0x7fffffffc7f8, tm=0x7fffffffd7e0) at time_rz.c:289
+#5  0x000000000055659a in emacs_localtime_rz (tm=0x7fffffffc7c0, t=0x7fffffffc7f8, tz=<optimized out>) at editfns.c:107
+#6  format_time_string (format=0x14736d8 "%Y-%m-%d %H:%M:%S %Z", formatlen=20, t=..., zone=zone@entry=21499028,
+    tmp=tmp@entry=0x7fffffffd7e0) at editfns.c:2070
+#7  0x00000000005567f2 in Fformat_time_string (format_string=<optimized out>, timeval=<optimized out>, zone=21499028) at editfns.c:2049
+#8  0x000000000055ae95 in eval_sub (form=<optimized out>) at eval.c:2178
+#9  0x000000000055aca4 in eval_sub (form=form@entry=16980419) at eval.c:2160
+#10 0x000000000055e1fc in Feval (form=16980419, lexical=<optimized out>) at eval.c:1994
+#11 0x000000000055b9da in Ffuncall (nargs=2, args=args@entry=0x7fffffffdad0) at eval.c:2702
+#12 0x000000000058e7db in exec_byte_code (bytestr=<optimized out>, vector=<optimized out>, maxdepth=<optimized out>,
+    args_template=<optimized out>, nargs=nargs@entry=1, args=<optimized out>, args@entry=0x7fffffffdad0) at bytecode.c:880
+#13 0x000000000055b556 in funcall_lambda (fun=9912284, nargs=nargs@entry=1, arg_vector=0x7fffffffdad0, arg_vector@entry=0x7fffffffdc80)
+    at eval.c:2863
+#14 0x000000000055b80b in Ffuncall (nargs=2, args=args@entry=0x7fffffffdc78) at eval.c:2760
+#15 0x000000000058e7db in exec_byte_code (bytestr=<optimized out>, vector=<optimized out>, maxdepth=<optimized out>,
+    args_template=<optimized out>, nargs=nargs@entry=0, args=<optimized out>, args@entry=0x7fffffffdc78) at bytecode.c:880
+#16 0x000000000055b556 in funcall_lambda (fun=9889260, nargs=nargs@entry=0, arg_vector=0x7fffffffdc78, arg_vector@entry=0x7fffffffde88)
+    at eval.c:2863
+#17 0x000000000055b80b in Ffuncall (nargs=1, args=args@entry=0x7fffffffde80) at eval.c:2760
+#18 0x000000000058e7db in exec_byte_code (bytestr=<optimized out>, vector=<optimized out>, maxdepth=<optimized out>,
+    args_template=<optimized out>, nargs=nargs@entry=0, args=<optimized out>, args@entry=0x7fffffffde80) at bytecode.c:880
+#19 0x000000000055b556 in funcall_lambda (fun=9885268, fun@entry=9885221, nargs=nargs@entry=0, arg_vector=0x7fffffffde80,
+    arg_vector@entry=0x7fffffffdfa0) at eval.c:2863
+#20 0x000000000055a908 in apply_lambda (fun=9885221, args=<optimized out>, count=count@entry=4) at eval.c:2800
+#21 0x000000000055ac1f in eval_sub (form=form@entry=17633363) at eval.c:2247
+#22 0x000000000055e1fc in Feval (form=17633363, lexical=<optimized out>) at eval.c:1994
+#23 0x000000000055a1e2 in internal_condition_case (bfun=bfun@entry=0x4ea730 <top_level_2>, handlers=handlers@entry=19104,
+    hfun=hfun@entry=0x4eeff0 <cmd_error>) at eval.c:1315
+#24 0x00000000004ecd3c in top_level_1 (ignore=ignore@entry=0) at keyboard.c:1129
+#25 0x0000000000559f13 in internal_catch (tag=tag@entry=45936, func=func@entry=0x4ecba0 <top_level_1>, arg=arg@entry=0) at eval.c:1080
+#26 0x00000000004ea588 in command_loop () at keyboard.c:1090
+#27 0x00000000004eeab7 in recursive_edit_1 () at keyboard.c:697
+#28 0x00000000004eedf8 in Frecursive_edit () at keyboard.c:768
+#29 0x000000000041907b in main (argc=5, argv=0x7fffffffe2f8) at emacs.c:1629
+
+Since I see the issue lies with the __strcpy_sse2_unaligned () function, I checked the last instruction:
+(gdb) x/i $pc
+7ffff173949b <__strcpy_sse2_unaligned+411>:    f3 0f 7f 7f f0  movdqu %xmm7,-0x10(%rdi)
+
+I was curious about the value in %rdi, so I ran:
+info registers
+
+I see the value is 0x149b00a, which is quite low for memory. This low-memory address and the massive size of the 
+move double quad word, led me to formulate a hypothesis about the restricted memory access error. Either %rdi does 
+not point to the correct location, or the double quad word is too large to fit into the previously allocated memory.

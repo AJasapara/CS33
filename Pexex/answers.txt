@@ -1,0 +1,44 @@
+Name: Arpit Jasapara, UID: 504742401
+
+1. 547920	48 8d 04 ad 02 00 00 00	lea 2(,%rbp,4),%rax	rax=7fffffff73ab3b42 
+These instructions result in an overflow causing the wrong value to be 
+outputted. 
+
+2. -2305843009213693952 = -(2^61)
+Elisp is a language that does not assign variable types at compile time. Thus, it 
+uses tags at runtime to identify types. In the case of the 64-bit integer, 
+the first 2 bits are reserved as a tag for Elisp. Thus, the max negative value 
+is -(2^61), instead of -(2^63), explaining this seemingly strange number.
+
+3. 0x1fffffffffffffff * 0x1fffffffffffffff * 0x1fffffffffffffff * 0x1fffffffffffffff =
+ffffffffffffffe0000000000000017ffffffffffffff8000000000000001
+
+Since it truncates to the lowest 62 bits, it comes out to just 1.
+
+4. Emacs should not run into any problems, since now overflow will not cause any 
+undefined behavior for sure. It will simply wrap around if it does overflow, so 
+there shouldn't be any fatal problems. However, this wrap around does mean that 
+the answer may not be mathematically correct. If there is overflow, then the wrap 
+around will cause the answer to be mathematically incorrect.
+
+5. Upon running the command as instructed in the spec in GDB, we obtain the following error: 
+Program received signal SIGSEGV, Segmentation fault.
+
+This type of error occurs when a program attempts to access a restricted area of memory. 
+
+The instruction where the error occurs is shown below:
+7ffff173949b <__strcpy_sse2_unaligned+411>:    f3 0f 7f 7f f0  movdqu %xmm7,-0x10(%rdi)
+
+and the value of %rdi is 0x149b00a. 
+The two most noticeable issues here are the value of %rdi and the size of %xmm7. 
+The value of %rdi is quite low for a memory reference, indicating that it may 
+actually be pointing to some key part of the system or the OS rather than some 
+allocated memory in the program. This issue with pointers commonly causes the 
+SIGSEGV error, where the pointer may not be pointing to the correct address,
+due to the memory already being freed or the pointer changing values. 
+This failure in memory allocation could be heightened by %xmm7 size. Since we 
+are moving a double quad word (128 bits) which is not a standard size, the 
+program may not have allocated the right amount of memory. If the double quad 
+word is too large, then the mov instruction could have attempted to access 
+memory that it had not previously allocated to try to fit the double quad word. 
+This attempt to access restricted memory could also have caused the SIGSEGV error.
