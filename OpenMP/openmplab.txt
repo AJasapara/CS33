@@ -1,0 +1,216 @@
+Name: Arpit Jasapara, UID: 504742401
+
+1. I obtained the zip file from CCLE and copied it over to the SEASNet Server.
+tar -xzvf openmplab.tgz
+I used this command to unzip the files into the current directory.
+
+2. make seq
+./seq
+FUNC TIME : 0.478509
+TOTAL TIME : 2.382622
+
+First I simply made the normal program without OpenMP to establish a baseline.
+
+3. make omp
+./omp
+FUNC TIME : 0.479385
+TOTAL TIME : 2.294812
+
+Then I compiled the program with OpenMP (but I haven't changed the source code yet) to establish a second baseline. I can see that the timings are similar, 
+as expected since I haven't modified the code yet.
+
+4. make seq GPROF=1
+./seq
+gprof ./seq
+
+Each sample counts as 0.01 seconds.
+  %   cumulative   self              self     total           
+ time   seconds   seconds    calls  ms/call  ms/call  name    
+ 71.53      0.40     0.40       15    26.70    27.59  func1
+ 12.52      0.47     0.07  5177344     0.00     0.00  rand2
+  5.36      0.50     0.03                             sequence
+  3.58      0.52     0.02   491520     0.00     0.00  findIndexBin
+  3.58      0.54     0.02        1    20.03    76.81  addSeed
+  1.79      0.55     0.01       16     0.63     0.63  dilateMatrix
+  1.79      0.56     0.01       15     0.67     2.00  func5
+  0.00      0.56     0.00   983042     0.00     0.00  round
+  0.00      0.56     0.00       15     0.00     0.00  func2
+  0.00      0.56     0.00       15     0.00     0.00  func3
+  0.00      0.56     0.00       15     0.00     0.00  func4
+  0.00      0.56     0.00       15     0.00     0.00  rand1
+  0.00      0.56     0.00        2     0.00     0.00  get_time
+  0.00      0.56     0.00        1     0.00     0.00  elapsed_time
+  0.00      0.56     0.00        1     0.00     0.00  fillMatrix
+  0.00      0.56     0.00        1     0.00     0.00  func0
+  0.00      0.56     0.00        1     0.00     0.00  getNeighbors
+  0.00      0.56     0.00        1     0.00    10.01  imdilateDisk
+
+Index by function name
+
+   [4] addSeed                 [2] func1                  [15] get_time
+   [8] dilateMatrix           [11] func2                   [9] imdilateDisk
+  [16] elapsed_time           [12] func3                  [14] rand1
+  [17] fillMatrix             [13] func4                   [5] rand2
+   [7] findIndexBin            [6] func5                  [10] round
+  [18] func0                  [19] getNeighbors            [3] sequence
+
+index % time    self  children    called     name
+                                                 <spontaneous>
+[1]     79.2    0.00    0.44                 filter [1]
+                0.40    0.01      15/15          func1 [2]
+                0.01    0.02      15/15          func5 [6]
+                0.00    0.00      15/15          func2 [11]
+                0.00    0.00      15/15          func3 [12]
+                0.00    0.00      15/15          rand1 [14]
+                0.00    0.00      15/15          func4 [13]
+                0.00    0.00       2/2           get_time [15]
+                0.00    0.00       2/983042      round [10]
+                0.00    0.00       1/1           fillMatrix [17]
+                0.00    0.00       1/1           getNeighbors [19]
+                0.00    0.00       1/1           func0 [18]
+                0.00    0.00       1/1           elapsed_time [16]
+-----------------------------------------------
+                0.40    0.01      15/15          filter [1]
+[2]     73.8    0.40    0.01      15         func1 [2]
+                0.01    0.00  983040/5177344     rand2 [5]
+                0.00    0.00  983040/983042      round [10]
+-----------------------------------------------
+                                                 <spontaneous>
+[3]     20.8    0.03    0.09                 sequence [3]
+                0.02    0.06       1/1           addSeed [4]
+                0.00    0.01       1/1           imdilateDisk [9]
+-----------------------------------------------
+                0.02    0.06       1/1           sequence [3]
+[4]     13.7    0.02    0.06       1         addSeed [4]
+                0.06    0.00 4194304/5177344     rand2 [5]
+-----------------------------------------------
+                0.01    0.00  983040/5177344     func1 [2]
+                0.06    0.00 4194304/5177344     addSeed [4]
+[5]     12.5    0.07    0.00 5177344         rand2 [5]
+-----------------------------------------------
+                0.01    0.02      15/15          filter [1]
+[6]      5.4    0.01    0.02      15         func5 [6]
+                0.02    0.00  491520/491520      findIndexBin [7]
+-----------------------------------------------
+                0.02    0.00  491520/491520      func5 [6]
+[7]      3.6    0.02    0.00  491520         findIndexBin [7]
+-----------------------------------------------
+                0.01    0.00      16/16          imdilateDisk [9]
+[8]      1.8    0.01    0.00      16         dilateMatrix [8]
+-----------------------------------------------
+                0.00    0.01       1/1           sequence [3]
+[9]      1.8    0.00    0.01       1         imdilateDisk [9]
+                0.01    0.00      16/16          dilateMatrix [8]
+-----------------------------------------------
+                0.00    0.00       2/983042      filter [1]
+                0.00    0.00  983040/983042      func1 [2]
+[10]     0.0    0.00    0.00  983042         round [10]
+-----------------------------------------------
+                0.00    0.00      15/15          filter [1]
+[11]     0.0    0.00    0.00      15         func2 [11]
+-----------------------------------------------
+                0.00    0.00      15/15          filter [1]
+[12]     0.0    0.00    0.00      15         func3 [12]
+-----------------------------------------------
+                0.00    0.00      15/15          filter [1]
+[13]     0.0    0.00    0.00      15         func4 [13]
+-----------------------------------------------
+                0.00    0.00      15/15          filter [1]
+[14]     0.0    0.00    0.00      15         rand1 [14]
+-----------------------------------------------
+                0.00    0.00       2/2           filter [1]
+[15]     0.0    0.00    0.00       2         get_time [15]
+-----------------------------------------------
+                0.00    0.00       1/1           filter [1]
+[16]     0.0    0.00    0.00       1         elapsed_time [16]
+-----------------------------------------------
+                0.00    0.00       1/1           filter [1]
+[17]     0.0    0.00    0.00       1         fillMatrix [17]
+-----------------------------------------------
+                0.00    0.00       1/1           filter [1]
+[18]     0.0    0.00    0.00       1         func0 [18]
+-----------------------------------------------
+                0.00    0.00       1/1           filter [1]
+[19]     0.0    0.00    0.00       1         getNeighbors [19]
+-----------------------------------------------
+
+The profiling reveals that func1 is the biggest time-hog. My first goal will be to speed up this function.
+
+5. emacs func.c
+make omp
+./omp
+FUNC TIME : 0.102986
+TOTAL TIME : 2.162293
+
+After applying minor changes to func1 using OpenMP, I have already experienced a nearly 5x speedup! I will now add additional changes, and improve all functions.
+
+6. emacs func.c
+make omp
+./omp
+FUNC TIME : 0.042899
+TOTAL TIME : 1.911747
+
+Total Speedup = Original/New = 0.478509/0.042899 = 11.1543
+
+We have achieved a speedup of over 11 times!
+
+I applied the parallel option to all loops in every function. Thus with OpenMP, this greatly sped up the entire program. I also limited the number of threads to 30 so 
+the system and other users are able to run their programs. Otherwise, too much context switching occurs and other problems rise, slowing down overall time. I also made 
+some variables private so that unsafe trajectories are not followed. 
+
+7. make check
+gcc -o omp  -O3 -fopenmp filter.c main.c func.c util.c -lm
+cp omp filter
+./filter
+FUNC TIME : 0.043478
+TOTAL TIME : 1.894507
+diff --brief correct.txt output.txt
+
+This command shows me that while speeding up the program, I did not affect its correctness.
+
+8. make omp MTRACE=1
+./omp
+make checkmem
+
+mtrace filter mtrace.out || true
+
+Memory not freed:
+-----------------
+           Address     Size     Caller
+0x0000000001646080   0x1e90  at 0x7f2a9e889869
+0x0000000001647f20     0xc0  at 0x7f2a9e889869
+0x0000000001647ff0     0xf8  at 0x7f2a9e8898b9
+0x00000000016480f0    0x240  at 0x7f2a9edb9c25
+0x0000000001648340    0x240  at 0x7f2a9edb9c25
+0x0000000001648590    0x240  at 0x7f2a9edb9c25
+0x00000000016487e0    0x240  at 0x7f2a9edb9c25
+0x0000000001648a30    0x240  at 0x7f2a9edb9c25
+0x0000000001648c80    0x240  at 0x7f2a9edb9c25
+0x0000000001648ed0    0x240  at 0x7f2a9edb9c25
+0x0000000001649120    0x240  at 0x7f2a9edb9c25
+0x0000000001649370    0x240  at 0x7f2a9edb9c25
+0x00000000016495c0    0x240  at 0x7f2a9edb9c25
+0x0000000001649810    0x240  at 0x7f2a9edb9c25
+0x0000000001649a60    0x240  at 0x7f2a9edb9c25
+0x0000000001649cb0    0x240  at 0x7f2a9edb9c25
+0x0000000001649f00    0x240  at 0x7f2a9edb9c25
+0x000000000164a150    0x240  at 0x7f2a9edb9c25
+0x000000000164a3a0    0x240  at 0x7f2a9edb9c25
+0x000000000164a5f0    0x240  at 0x7f2a9edb9c25
+0x000000000164a840    0x240  at 0x7f2a9edb9c25
+0x000000000164aa90    0x240  at 0x7f2a9edb9c25
+0x000000000164ace0    0x240  at 0x7f2a9edb9c25
+0x000000000164af30    0x240  at 0x7f2a9edb9c25
+0x000000000164b180    0x240  at 0x7f2a9edb9c25
+0x000000000164b3d0    0x240  at 0x7f2a9edb9c25
+0x000000000164b620    0x240  at 0x7f2a9edb9c25
+0x000000000164b870    0x240  at 0x7f2a9edb9c25
+0x000000000164bac0    0x240  at 0x7f2a9edb9c25
+0x000000000164bd10    0x240  at 0x7f2a9edb9c25
+0x000000000164bf60    0x240  at 0x7f2a9edb9c25
+0x000000000164c1b0    0x240  at 0x7f2a9edb9c25
+
+At first, this may seem worrisome. However, according to the TA, "The spec says: 'A memory leak is defined as a region of memory that was allocated but never freed.'' But from 
+my understanding, there are some dynamically allocated global variables injected into your code by OpenMP (such as thread IDs). These are really freed after the process 
+has been completely exited and so they are not under our control." For example, 30 of these leaks correspond to size 0x240, which could simply be the 30 thread IDs. Thus, 
+these 'memory leaks' are not of concern. 
